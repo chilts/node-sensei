@@ -63,6 +63,8 @@ bouncy(function (req, bounce) {
         res.writeHead(404);
         res.end('Not Found\n');
     }
-}).listen(8000);
+}).listen(8000, function() {
+    console.log((new Date()).toISOString() + ' : Listening on port 8000');
+});
 
 // --------------------------------------------------------------------------------------------------------------------

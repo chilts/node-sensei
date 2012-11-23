@@ -9,37 +9,35 @@
 // --------------------------------------------------------------------------------------------------------------------
 
 var url  = require('url');
-var connect = require('connect');
+var http = require('http');
 var MemoryStore = require('../lib/store/memory.js');
 
 // --------------------------------------------------------------------------------------------------------------------
+// setup
 
+// do the right store according to the config
 var store = new MemoryStore();
 
-var app = connect()
-    .use(connect.logger('dev'))
-    // .use(connect.query())
-    .use(function(req, res) {
-        // console.log('url=' + req.url);
+// --------------------------------------------------------------------------------------------------------------------
 
-        var parts = url.parse(req.url, true);
+function listener(req, res) {
+    console.log((new Date()).toISOString() + ' : http://' + req.headers.host + req.url);
 
-        switch (parts.pathname) {
-        case '/set':
-            set(req, res, parts);
-            break;
-        case '/get':
-            get(req, res, parts);
-            break;
-        default:
-            res.writeHead(404);
-            res.end('Not Found\n');
-            break;
-        }
-    })
-;
+    var parts = url.parse(req.url, true);
 
-var keys = {};
+    switch (parts.pathname) {
+    case '/set':
+        set(req, res, parts);
+        break;
+    case '/get':
+        get(req, res, parts);
+        break;
+    default:
+        res.writeHead(404);
+        res.end('Not Found\n');
+        break;
+    }
+}
 
 function set(req, res, parts) {
     store.set(parts.query.bucket, parts.query.key, parts.query.value, function(err, result) {
@@ -54,9 +52,6 @@ function set(req, res, parts) {
 }
 
 function get(req, res, parts) {
-    console.log(parts.query.bucket);
-    console.log(parts.query.key);
-
     store.get(parts.query.bucket, parts.query.key, function(err, result) {
         if (err) {
             res.writeHead(500);
@@ -68,8 +63,12 @@ function get(req, res, parts) {
     });
 }
 
-app.listen(8001, function() {
-    console.log('Listening on port 8001');
+// --------------------------------------------------------------------------------------------------------------------
+// start up the server
+
+var server = http.createServer(listener);
+server.listen(8001, function(req, res) {
+    console.log("Listening on port 8001");
 });
 
 // --------------------------------------------------------------------------------------------------------------------

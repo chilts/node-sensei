@@ -25,7 +25,47 @@
 //
 // --------------------------------------------------------------------------------------------------------------------
 
+var fs = require('fs');
+var ini = require('ini');
 var bouncy = require('bouncy');
+
+var opt = require('optimist')
+    .usage('Proxy across other sensei services.\n\nUsage: $0')
+    .alias('f', 'file')
+    .describe('f', 'The config file to use')
+    .alias('p', 'port')
+    .describe('p', 'Port to listen on (required)')
+    .alias('c', 'cluster')
+    .describe('c', 'The name of this cluster (required)')
+    .alias('j', 'join')
+    .describe('j', 'Which cluster to join')
+;
+var argv = opt.argv;
+
+var opts = {};
+var config;
+if ( argv.file ) {
+    config       = ini.parse(fs.readFileSync(argv.file, 'utf-8'));
+    opts.port    = config.proxy.port;
+    opts.cluster = config.proxy.cluster;
+    opts.join    = config.proxy.join;
+}
+
+if ( argv.port    ) { opts.port = argv.port;    }
+if ( argv.join    ) { opts.join = argv.join;    }
+if ( argv.cluster ) { opts.join = argv.cluster; }
+
+// validate the options
+if ( !opts.port ) {
+    console.log(opt.help());
+    process.exit(2);
+}
+
+// validate the options
+if ( !opts.cluster ) {
+    console.log(opt.help());
+    process.exit(2);
+}
 
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -63,8 +103,8 @@ bouncy(function (req, bounce) {
         res.writeHead(404);
         res.end('Not Found\n');
     }
-}).listen(8000, function() {
-    console.log((new Date()).toISOString() + ' : Listening on port 8000');
+}).listen(opts.port, function() {
+    console.log((new Date()).toISOString() + ' : Listening on port ' + opts.port);
 });
 
 // --------------------------------------------------------------------------------------------------------------------
